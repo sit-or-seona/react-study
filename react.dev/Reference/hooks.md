@@ -80,6 +80,98 @@
 ## useReducer
 
 - reducer 함수 안에 업데이트 로직이 있는 state 변수를 선언
+- 컴포넌트에 reducer를 추가할 수 있는 훅
+  ```js
+  const [state, dispatch] = useReducer(reducer, initialArg, init?)
+  ```
+- 컴포넌트 최상위 레벨에서 호출
+
+### Parameters
+
+- reducer
+  - state가 업데이트되는 방식을 지정
+  - 순수함수여야 함
+  - state와 action을 인자로 받고 다음 state를 반환
+- initialArg
+  - 초기 state가 계산되는 값
+- optional init
+  - 초기 state 계산 방법을 지정하는 초기화 함수
+  - 지정하지 않으면 initialArg로 설정
+
+### Returns
+
+- 2개의 값을 가진 배열을 반환
+  - 1. 현재 state (첫 번째 렌더링 중에는 init 또는 initialArg)
+  - 2. state를 다른 값으로 업데이트하고 리렌더링을 일으키는 dispatch 함수
+
+### 주의사항
+
+- 컴포넌트 최상위 레벨에서만 호출 가능
+- Strict Mode에서 reducer와 초기화 함수를 두 번 호출 (개발 환경)
+
+<br>
+
+## useReducer - dispatch function
+
+- useReducer가 반환하는 dispatch 함수를 사용하면 state를 다른 값으로 업데이트하고 리렌더링
+- dispatch 함수에 유일한 인수로 액션을 전달
+- React는 reducer 함수에 현재 state와 dispatch한 액션을 전달하고, 그 결과를 다음 state로 설정
+
+  ```js
+  const [state, dispatch] = useReducer(reducer, { age: 42 });
+
+  function handleClick() {
+    dispatch({ type: 'incremented_age' });
+    // ...
+  ```
+
+### Parameters
+
+- action
+  - 사용자가 수행한 작업
+
+### Returns
+
+- 반환값이 없음
+
+### 주의사항
+
+- 다음 렌더링에 대한 state만 업데이트 (화면에는 이전 값이 계속 표시)
+- 새 값이 `Object.is`로 비교했을 때 현재 state와 동일하면 리렌더링이 일어나지 않음
+
+<br>
+
+## 사용법
+
+```js
+import { useReducer } from "react";
+
+function reducer(state, action) {
+  if (action.type === "incremented_age") {
+    return {
+      age: state.age + 1,
+    };
+  }
+  throw Error("Unknown action.");
+}
+
+export default function Counter() {
+  const [state, dispatch] = useReducer(reducer, { age: 42 });
+
+  return (
+    <>
+      <button
+        onClick={() => {
+          dispatch({ type: "incremented_age" });
+        }}
+      >
+        Increment age
+      </button>
+      <p>Hello! You are {state.age}.</p>
+    </>
+  );
+}
+```
 
 <br>
 
@@ -95,21 +187,18 @@
 
 - fn
 
-- 캐시하려는 함수
-- React는 초기 렌더링을 하는 동안 함수를 반환
-- React는 마지막 렌더링 이후 dependencies가 변경되지 않았다면 이전 렌더링과 동일한 함수를 반환
-- dependencies가 변경되었다면 이번 렌더링 중에 전달한 함수를 반환하고 나중에 재사용할 수 있도록 저장
+  - 캐시하려는 함수
+  - React는 초기 렌더링을 하는 동안 함수를 반환
+  - React는 마지막 렌더링 이후 dependencies가 변경되지 않았다면 이전 렌더링과 동일한 함수를 반환
+  - dependencies가 변경되었다면 이번 렌더링 중에 전달한 함수를 반환하고 나중에 재사용할 수 있도록 저장
 
 - dependencies
-- fn 코드에 참조된 모든 값의 배열
-- props, state, 변수 및 함수 모두 포함
-- React는 `Object.is` 비교 알고리즘을 사용하여 각 의존성 값을 이전 값과 비교
+
+  - fn 코드에 참조된 모든 값의 배열
+  - props, state, 변수 및 함수 모두 포함
+  - React는 `Object.is` 비교 알고리즘을 사용하여 각 의존성 값을 이전 값과 비교
 
 ### Returns
 
 - 초기 렌더링에서 전달한 fn 함수를 반환
 - 렌더링 중에는 마지막 렌더링에서 이미 저장된 fn 함수를 반환하거나, 의존성이 변경되지 않은 경우, 렌더링 중에 전달했던 fn 함수를 반환
-
-```
-
-```
