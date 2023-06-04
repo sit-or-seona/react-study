@@ -1,8 +1,13 @@
 # State Hooks
 
+- state를 사용하면 컴포넌트가 **정보를 기억**
+  |hook|설명|
+  |:---:|:---:|
+  |useState|직접 업데이트할 수 있는 state 변수를 선언|
+  |useReducer|reducer 함수 안에 업데이트 로직이 있는 state 변수를 선언|
+
 ## useState
 
-- 직접 업데이트할 수 있는 state 변수를 선언
 - 컴포넌트 최상위 레벨에서 호출
 - 배열 구조 분해 할당을 사용해 [something, setSomething]을 지정
 
@@ -79,7 +84,6 @@
 
 ## useReducer
 
-- reducer 함수 안에 업데이트 로직이 있는 state 변수를 선언
 - 컴포넌트에 reducer를 추가할 수 있는 훅
   ```js
   const [state, dispatch] = useReducer(reducer, initialArg, init?)
@@ -176,6 +180,22 @@ export default function Counter() {
 <br>
 
 # Performance Hooks
+
+- 렌더링 성능 최적화를 위해 불필요한 리렌더링을 건너뛰도록 만드는 훅
+- 캐시된 데이터를 사용하거나 데이터가 변경되지 않은 경우
+  |hook|설명|
+  |:---:|:---:|
+  |useCallback|함수 정의를 캐시한 후 최적화된 컴포넌트로 전달|
+  |useMemo|비용이 많이 드는 계산 결과를 캐시|
+- 화면이 업데이트되어야 해서 렌더링을 건너뛸 수 없는 경우
+  - 아래 2가지를 분리하여 성능을 향상
+    - input에 타이핑하는 것처럼 동기화되어야 할 블로킹 업데이트
+    - 차트를 업데이트하는 것처럼 UI를 차단할 필요가 없는 논-블로킹 업데이트
+- 렌더링 우선순위를 지정하여 성능 최적화하는 훅
+  |hook|설명|
+  |:---:|:---:|
+  |useTransition|state 전환을 논-블로킹 state로 표시하고 다른 업데이트가 이를 중단하도록 허용(함수 실행의 우선순위를 지정)|
+  |useDeferredValue|UI의 중요하지 않은 부분의 업데이트를 연기하고 다른 부분이 먼저 업데이트(값 업데이트의 우선순위를 지정)|
 
 ## useCallback
 
