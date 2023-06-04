@@ -179,6 +179,64 @@ export default function Counter() {
 
 <br>
 
+# Effect Hooks
+
+- 컴포넌트를 외부 시스템에 연결하고 동기화하는 훅
+- 네트워크, 브라우저 DOM, 애니메이션, UI라이브러리 등을 사용하는 것 등
+  |hook|설명|
+  |:---:|:---:|
+  |useEffect|컴포넌트를 외부 시스템에 연결(외부 시스템과 상호작용하지 않는다면 사용 비권장) <br> 데이터 흐름을 조율하기 위해 사용하지 말 것|
+  |useLayoutEffect|브라우저가 화면을 리페인트하기 전에 실행(useEffect보다 먼저 실행, 화면 깜빡임이 발생할 때 사용)|
+  |useInsertionEffect|React가 DOM을 변경하기 전에 실행(라이브러리는 여기에 동적CSS 삽입 가능)|
+
+## useEffect
+
+- 컴포넌트를 외부 시스템과 동기화하는 훅
+
+  - 외부 시스템: React로 제어되지 않는 코드를 의미
+    - 예시
+      - `setInterval()`과 `clearInterval()`
+      - `window.addEventListener()`와 `window.removeEventListener()`
+      - `animation.start()`와 `animation.reset()` 등
+
+  ```js
+  useEffect(setup, dependencies?)
+  ```
+
+### Parameters
+
+- setup
+  - Effect의 로직이 포함된 함수
+  - 클린업 함수를 반환 가능
+  - React는 컴포넌트가 DOM에 추가되면 셋업 함수를 실행
+  - dependencies가 변경되어 리렌더링을 할 때마다 클린업 함수가 있다면 이전 값으로 클린업 함수를 실행한 다음, 새 값으로 셋업 함수를 실행
+  - 컴포넌트가 DOM에 제거되면 React는 마지막으로 클린업 함수를 실행
+- dependencies(optional)
+  - setup 함수 내에서 참조된 **모든 반응형 값**의 배열
+  - React용으로 구성된 린터가 모든 반응형 값이 dependencies에 잘 지정되었는지 확인
+  - 각 dependencies는 `Object.is` 로 이전 값과 비교
+  - 빈 배열을 전달하면 컴포넌트가 리렌더링 될 때마다 useEffect를 실행
+
+### Returns
+
+- undefined를 반환
+
+### 주의사항
+
+- 외부 시스템과 동기화하려는 목적이 아니라면 대부분 useEffect가 필요없음
+- Strict Mode일 경우, 첫 번째 셋업 전에 개발전용 셋업과 클린업 사이클을 한 번 더 실행
+  - 클린업 로직이 셋업 로직을 미러링하고 셋업의 작업을 모두 클린업 하는지 테스트하는 과정
+  - 문제가 발생하면 클린업 기능을 구현해야 함
+- dependencies가 컴포넌트 내에 정의된 객체나 함수인 경우, useEffect가 필요 이상으로 재실행 될 위험이 있음
+  - 해결하기 위해선 불필요한 객체나 함수를 dependencies에서 제거하거나 useEffect 외부에서 state 업데이트와 비반응형 로직을 제거
+- 클릭과 같은 인터랙션으로 useEffect가 실행되는 것이 아니라면 브라우저는 useEffect를 실행하기 전에 업데이트된 화면을 먼저 페인트
+  - 깜빡임과 같은 지연이 있다면 `useLayoutEffect`로 대체해야 함
+- 인터랙션으로 useEffect가 실행되는 경우에도 브라우저는 state를 업데이트하기 전에 스크린을 먼저 페인트할 수 있음
+  - 리페인트를 막아야 한다면 `useLayoutEffect`로 대체해야 함
+- useEffect는 클라이언트에서만 실행. 서버렌더링 중에는 실행되지 않음
+
+<br>
+
 # Performance Hooks
 
 - 렌더링 성능 최적화를 위해 불필요한 리렌더링을 건너뛰도록 만드는 훅
