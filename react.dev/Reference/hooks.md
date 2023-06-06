@@ -207,7 +207,7 @@ export default function Counter() {
 
 - setup
   - Effect의 로직이 포함된 함수
-  - 클린업 함수를 반환 가능
+  - 클린업 함수를 return 가능
   - React는 컴포넌트가 DOM에 추가되면 셋업 함수를 실행
   - dependencies가 변경되어 리렌더링을 할 때마다 클린업 함수가 있다면 이전 값으로 클린업 함수를 실행한 다음, 새 값으로 셋업 함수를 실행
   - 컴포넌트가 DOM에 제거되면 React는 마지막으로 클린업 함수를 실행
@@ -226,7 +226,7 @@ export default function Counter() {
 - 외부 시스템과 동기화하려는 목적이 아니라면 대부분 useEffect가 필요없음
 - Strict Mode일 경우, 첫 번째 셋업 전에 개발전용 셋업과 클린업 사이클을 한 번 더 실행
   - 클린업 로직이 셋업 로직을 미러링하고 셋업의 작업을 모두 클린업 하는지 테스트하는 과정
-  - 문제가 발생하면 클린업 기능을 구현해야 함
+  - 문제가 발생하면 클린업 함수를 구현해야 함
 - dependencies가 컴포넌트 내에 정의된 객체나 함수인 경우, useEffect가 필요 이상으로 재실행 될 위험이 있음
   - 해결하기 위해선 불필요한 객체나 함수를 dependencies에서 제거하거나 useEffect 외부에서 state 업데이트와 비반응형 로직을 제거
 - 클릭과 같은 인터랙션으로 useEffect가 실행되는 것이 아니라면 브라우저는 useEffect를 실행하기 전에 업데이트된 화면을 먼저 페인트
@@ -234,6 +234,45 @@ export default function Counter() {
 - 인터랙션으로 useEffect가 실행되는 경우에도 브라우저는 state를 업데이트하기 전에 스크린을 먼저 페인트할 수 있음
   - 리페인트를 막아야 한다면 `useLayoutEffect`로 대체해야 함
 - useEffect는 클라이언트에서만 실행. 서버렌더링 중에는 실행되지 않음
+
+<br>
+
+## useLayoutEffect
+
+- **`useLayoutEffect`는 성능을 저하시킬 수 있어, 가급적 `useEffect` 사용을 권장**
+- 브라우저가 화면을 리페인트하기 전에 실행되는 버전의 `useEffect`
+  ```js
+  useLayoutEffect(setup, dependencies?)
+  ```
+
+### Parameters
+
+- setup
+  - Effect의 로직이 포함된 함수
+  - 클린업 함수를 return 가능
+  - 컴포넌트가 DOM에 추가되기 전 React는 셋업 함수를 실행
+  - dependencies가 변경되어 리렌더링을 할 때마다 클린업 함수가 있다면 이전 값으로 클린업 함수를 실행한 다음, 새 값으로 셋업 함수를 실행
+  - 컴포넌트가 DOM에서 제거되기 전, React는 셋업 함수를 한 번 더 실행
+- dependencies(optional)
+  - setup 함수 내에서 참조된 **모든 반응형 값**의 배열
+  - React용으로 구성된 린터가 모든 반응형 값이 dependencies에 잘 지정되었는지 확인
+  - 각 dependencies는 `Object.is` 로 이전 값과 비교
+  - 빈 배열을 전달하면 컴포넌트가 리렌더링 될 때마다 useEffect를 실행
+
+### Returns
+
+- undefined를 반환
+
+### 주의사항
+
+- Strict Mode일 경우, 첫 번째 셋업 전에 개발전용 셋업과 클린업 사이클을 한 번 더 실행
+  - 클린업 로직이 셋업 로직을 미러링하고 셋업의 작업을 모두 클린업 하는지 테스트하는 과정
+  - 문제가 발생하면 클린업 함수를 구현해야 함
+- dependencies가 컴포넌트 내에 정의된 객체나 함수인 경우, useEffect가 필요 이상으로 재실행 될 위험이 있음
+  - 해결하기 위해선 불필요한 객체나 함수를 dependencies에서 제거하거나 useEffect 외부에서 state 업데이트와 비반응형 로직을 제거
+- 클라이언트에서만 실행되기 때문에 서버 렌더링 중에는 실행되지 않음
+- `useLayoutEffect` 내의 코드와 state 업데이트는 브라우저가 화면을 리페인트하는 걸 막음
+  - 과도하게 사용하면 앱이 느려지기 때문에 `useEffect` 사용을 권장
 
 <br>
 
