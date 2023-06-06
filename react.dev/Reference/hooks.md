@@ -145,7 +145,7 @@
 
 <br>
 
-## 사용법
+### 사용법
 
 ```js
 import { useReducer } from "react";
@@ -176,6 +176,110 @@ export default function Counter() {
   );
 }
 ```
+
+<br>
+
+# Ref Hooks
+
+- 컴포넌트가 렌더링에 사용되지 않는 정보(ex. DOM노드, timeout ID)를 유지하도록 하는 훅
+- state와 달리 리렌더링을 유발하지 않음
+- React에서 탈출구 역할이기 때문에 빌트인 브라우저 API와 같이 리액트 외의 시스템에서 작업해야 할 때 유용
+  |hook|설명|
+  |:---:|:---:|
+  |useRef|ref를 선언하고 대부분 DOM 노드를 담음|
+  |useImperativeHandle|컴포넌트가 노출하는 ref를 사용자가 직접 정의(거의 사용 안 함)|
+
+## useRef
+
+- 렌더링에 필요하지 않은 값을 참조할 수 있는 훅
+
+```js
+const ref = useRef(initialValue);
+```
+
+### Parameters
+
+- initialValue
+  - ref 객체의 `current` 프로퍼티의 초기 설정값
+  - 초기 렌더링 이후부터는 무시됨
+
+### Returns
+
+- 단일 프로퍼티를 가진 `current` 객체를 반환
+- `current`
+  - 초기엔 initialValue이고 값 변경 가능
+  - ref 객체를 JSX 노드의 `ref` 어트리뷰트로 전달하면 React는 `current` 프로퍼티를 설정
+- 다음 렌더링에서 동일한 객체를 반환
+
+### 주의사항
+
+- `ref.current` 프로퍼티는 state와 달리 변경 가능
+  - state를 포함하는 경우 변경 불가능
+- `ref.current` 프로퍼티를 변경해도 리렌더링이 일어나지 않음
+  - 일반 JavaScript 객체이기 때문
+- 초기화를 제외하고 렌더링 중에 `ref.current`를 읽거나 작성하지 말 것
+  - 컴포넌트의 동작을 예측할 수 없게 되기 때문
+  ```js
+  function MyComponent() {
+    // ...
+    // 🚩 Don't write a ref during rendering
+    // 🚩 렌더링 중에 ref를 작성하지 마세요.
+    myRef.current = 123;
+    // ...
+    // 🚩 Don't read a ref during rendering
+    // 🚩 렌더링 중에 ref를 읽지 마세요.
+    return <h1>{myOtherRef.current}</h1>;
+  }
+  ```
+  - ref를 읽거나 작성하기 위해 이벤트 핸들러나 useEffect 사용
+  ```js
+  function MyComponent() {
+    // ...
+    useEffect(() => {
+      // ✅ You can read or write refs in effects
+      // ✅ Effect에서 ref를 읽거나 쓸 수 있습니다.
+      myRef.current = 123;
+    });
+    // ...
+    function handleClick() {
+      // ✅ You can read or write refs in event handlers
+      // ✅ 이벤트 핸들러에서 ref를 읽거나 쓸 수 있습니다.
+      doSomething(myOtherRef.current);
+    }
+    // ...
+  }
+  ```
+- Strict Mode에서 ref 객체는 두 번 생성되고 그중 하나는 버려짐 (개발 환경)
+
+### 사용법
+
+- ref를 사용했을 때 보장되는 것
+  - 렌더링할 때마다 재설정되는 일반 변수와 달리 리렌더링 사이에 정보를 저장 가능
+  - 리렌더링을 유발하는 state 변수와 달리 변경해도 리렌더링이 일어나지 않음
+    - 화면에 표시되는 정보를 저장하는 데에 적합하지 않음
+  - 정보가 공유되는 외부 변수와 달리 각각의 컴포넌트에 로컬로 저장됨
+- ref로 DOM 조작하기
+
+  - DOM 노드 `<input>` 접근해 `focus()`와 같은 메서드 호출 가능
+
+  ```js
+  import { useRef } from "react";
+
+  export default function Form() {
+    const inputRef = useRef(null);
+
+    function handleClick() {
+      inputRef.current.focus();
+    }
+
+    return (
+      <>
+        <input ref={inputRef} />
+        <button onClick={handleClick}>Focus the input</button>
+      </>
+    );
+  }
+  ```
 
 <br>
 
