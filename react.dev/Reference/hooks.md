@@ -179,6 +179,116 @@ export default function Counter() {
 
 <br>
 
+# Context Hooks
+
+- props를 전달받지 않아도 컴포넌트가 조상으로부터 정보를 받을 수 있도록 하는 훅
+  |hook|설명|
+  |:---:|:---:|
+  |useContext|context를 읽고 구독|
+
+## useContext
+
+- context를 읽고 구독할 수 있게 해주는 훅
+
+```js
+const value = useContext(SomeContext);
+```
+
+### Parameters
+
+- context
+  - `createContext`로 생성한 context
+  - context 자체는 정보를 보유하지 않고, 정보의 종류를 나타냄
+
+### Returns
+
+- 호출하는 컴포넌트에 대한 context 값을 반환
+  - context 값: 호출한 컴포넌트에 상위에 있는 가장 가까운 `SomeContext.Provider`에 전달된 value
+  - provider가 없는 경우, `createContext`에 전달한 `defaultValue`
+- 반환된 값은 항상 최신 값
+- React는 context가 변경되면 context를 읽는 컴포넌트를 리렌더링
+
+### 주의사항
+
+- `useContext()` 호출은 `Context.Provider`가 **동일한 컴포넌트가 아닌 호출을 수행하는 컴포넌트의 상위**에 있어야 함
+- React는 변경된 value를 받는 provider부터 시작해 해당 context를 사용하는 자식 컴포넌트도 모두 리렌더링
+- 이전 값과 다음 값은 `Object.is`로 비교
+- `memo`로 리렌더링을 건너뛰어도 자식들이 새로운 context 값을 수신하는 건 막지 못함
+- context로 무언갈 전달할 때, context를 제공하는 `SomeContext`와 context를 읽는 `SomeContext`가 정확하게 동일한 객체일 경우에만 작동
+  - 빌드 시스템이 출력 결과에 중복 모듈을 생성하는 경우 context가 손상 (ex. 심볼릭 링크 사용)
+
+### 사용법
+
+- 트리 깊숙이 데이터 전달
+
+  ```js
+  import { createContext, useContext } from "react";
+
+  const ThemeContext = createContext(null);
+
+  export default function MyApp() {
+    return (
+      <ThemeContext.Provider value="dark">
+        <Form />
+      </ThemeContext.Provider>
+    );
+  }
+
+  function Form() {
+    return (
+      <Panel title="Welcome">
+        <Button>Sign up</Button>
+        <Button>Log in</Button>
+      </Panel>
+    );
+  }
+
+  function Panel({ title, children }) {
+    const theme = useContext(ThemeContext);
+    const className = "panel-" + theme;
+    return (
+      <section className={className}>
+        <h1>{title}</h1>
+        {children}
+      </section>
+    );
+  }
+
+  function Button({ children }) {
+    const theme = useContext(ThemeContext);
+    const className = "button-" + theme;
+    return <button className={className}>{children}</button>;
+  }
+  ```
+
+- context를 통해 전달된 데이터 업데이트
+
+  - **context를 업데이트하기 위해선 state와 결합해야 함 (기본값은 절대 변경되지 않음)**
+  - 부모 컴포넌트에 state 변수를 선언하고 state를 context value로 전달
+
+  ```js
+  function MyPage() {
+    const [theme, setTheme] = useState("dark");
+    return (
+      <ThemeContext.Provider value={theme}>
+        <Form />
+        <Button
+          onClick={() => {
+            setTheme("light");
+          }}
+        >
+          Switch to light theme
+        </Button>
+      </ThemeContext.Provider>
+    );
+  }
+  ```
+
+- 객체 및 함수를 value로 전달시 리렌더링 최적화
+  - 리렌더링할 때마다 다른 객체/함수를 가리키게 되므로 context를 호출하는 모든 컴포넌트가 리렌더링되는 이슈 발생
+  - value로 전달하는 객체/함수를 `useCallback`이나 `useMemo`로 감싸서 성능 최적화
+    <br>
+
 # Ref Hooks
 
 - 컴포넌트가 렌더링에 사용되지 않는 정보(ex. DOM노드, timeout ID)를 유지하도록 하는 훅
