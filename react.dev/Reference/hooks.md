@@ -533,3 +533,38 @@ const ref = useRef(initialValue);
 
 - 초기 렌더링에서 전달한 fn 함수를 반환
 - 렌더링 중에는 마지막 렌더링에서 이미 저장된 fn 함수를 반환하거나, 의존성이 변경되지 않은 경우, 렌더링 중에 전달했던 fn 함수를 반환
+
+## useMemo
+
+- 리렌더링 사이의 계산 결과를 캐시하는 훅
+
+```js
+const cachedValue = useMemo(calculateValue, dependencies);
+```
+
+### Parameters
+
+- calculateValue
+  - 캐시하려는 값을 계산하는 함수
+  - 조건: 순수함수, 인자 X, 값 반환 필수
+  - 초기 렌더링 중에 함수를 호출하고, 이후의 렌더링에서 dependencies가 변경되지 않았다면 동일한 값을 반환
+  - dependencies가 변경되었다면 `calculateValue`를 호출하고 그 결과를 반환하며 값을 저장
+- dependencies
+  - `calculateValue` 코드 내에서 참조된 모든 반응형 값들의 배열
+  - React용 린터를 사용해 모든 반응형 값이 dependencies로 올바르게 지정되었는지 확인
+  - React는 `Object.is` 비교 알고리즘을 사용하여 각 의존성 값을 이전 값과 비교
+
+### Returns
+
+- 초기 렌더링: 인자 없이 `calculateValue`를 호출한 결과를 반환
+- 이후 렌더링
+  - dependencies가 변경되지 않은 경우에는 마지막 렌더링에서 저장된 값을 반환
+  - dependencies가 변경된 경우 `calculateValue`를 다시 호출하여 그 결과를 반환
+
+### 주의사항
+
+- `useMemo`는 성능 최적화를 목적으로 사용해야 함
+  - React는 특별한 이유가 없으면 캐시된 값을 유지
+    - 개발 환경에서 컴포넌트의 파일을 수정할 경우 캐시를 제거
+    - 개발&프로덕션 환경에서 컴포넌트가 초기 마운트 중에 중단되면 캐시를 제거
+  - 성능 최적화를 위해 `useMemo`를 사용하는 경우 괜찮지만 state 변수나 ref가 더 적절할 수 있음
