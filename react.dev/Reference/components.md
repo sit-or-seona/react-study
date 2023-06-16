@@ -136,3 +136,138 @@
     </Profiler>
   </App>
   ```
+
+## Suspense
+
+- 자식이 로딩을 완료할 때까지 폴백을 화면에 표시
+  ```js
+  <Suspense fallback={<Loading />}>
+    <SomeComponent />
+  </Suspense>
+  ```
+
+### Props
+
+- children
+  - 렌더링하려는 실제 UI
+  - children이 렌더링 중 일시 중단되면 Suspense 바운더리가 `fallback` 렌더링으로 전환
+- fallback
+  - 실제 UI의 로딩이 완료되지 않은 경우 렌더링할 대체 UI
+  - 주로 로딩 스피너나 스켈레톤을 사용
+  - `children`이 일시 중단되면 `fallback`으로 전환되고, 데이터가 준비되면 다시 `children`으로 전환
+  - 만약 `fallback`이 렌더링 중 일시 중단되면 가장 가까운 상위 Suspense 바운더리가 활성화 (→ 직계자식일 필요가 X)
+
+### 주의사항
+
+- React는 처음 마운트하기 전에 일시 중단된 렌더링의 state를 보존하지 않기 때문에 컴포넌트가 로드되면 React는 일시 중단된 트리의 렌더링을 처음부터 다시 시도
+- Suspense가 트리에 대한 컨텐츠를 표시하고 있다가 다시 일시 중단된 경우, `fallback`이 다시 표시
+  - 그 원인이 된 업데이트가 `startTransition`이나 `useDeferredValue`로 인한 것이 아닐 경우
+- 이미 표시된 컨텐츠가 다시 일시 중단되어 숨겨야 하는 경우, React는 컨텐츠 트리에서 **layout Effects**를 클린업하고, 컨텐츠가 다시 표시될 준비가 되면 layout Effect를 다시 실행
+  - 컨텐츠가 숨겨져 있는 동안 Effect가 DOM 레이아웃을 측정하는 작업을 시도하지 않도록 함
+- React에는 Suspense와 통합된 내부 최적화가 포함되어 있음 (ex. Streaming Server Rendering, Selective Hydration)
+
+### 사용법
+
+- 콘텐츠를 로딩하는 동안 폴백 표시
+- Note
+
+  ```
+  <Suspense 컴포넌트를 활성화하는 소스>
+  - Relay 및 Next.js와 같은 Suspense 도입 프레임워크를 사용한 데이터 패칭
+  - lazy를 사용한 지연 로딩 컴포넌트 코드
+
+  <주의>
+  - Effect나 이벤트 핸들러 내부에서 페칭하는 경우 감지하지 않음
+  ```
+
+- 콘텐츠를 한 번에 드러내기
+
+  - Suspense 내부의 전체 트리는 단일 단위로 취급되기 때문에 하나의 데이터 대기를 위해 일시 중단되더라도 모든 컴포넌트가 `fallback`으로 대체
+
+  ```js
+  <Suspense fallback={<Loading />}>
+    <Biography />
+    <Panel>
+      <Albums />
+    </Panel>
+  </Suspense>
+  ```
+
+- 새 콘텐츠가 로드되는 동안 이전 콘텐츠 표시
+
+  - `useDeferredValue` 훅을 함께 사용해 새 결과가 준비될 때까지 이전 결과를 계속 표시
+
+  ```js
+  import { Suspense, useState, useDeferredValue } from "react";
+  import SearchResults from "./SearchResults.js";
+
+  export default function App() {
+    const [query, setQuery] = useState("");
+    const deferredQuery = useDeferredValue(query);
+    const isStale = query !== deferredQuery;
+    return (
+      <>
+        <label>
+          Search albums:
+          <input value={query} onChange={(e) => setQuery(e.target.value)} />
+        </label>
+        <Suspense fallback={<h2>Loading...</h2>}>
+          // 이전 결과와의 구분을 위해 스타일 추가
+          <div style={{ opacity: isStale ? 0.5 : 1 }}>
+            <SearchResults query={deferredQuery} />
+          </div>
+        </Suspense>
+      </>
+    );
+  }
+  ```
+
+- 이미 표시된 콘텐츠가 숨겨지지 않도록 방지
+
+  - 컴포넌트가 일시 중단되면 Suspense 바운더리의 폴백으로 전환되는데, 이미 일부 컨텐츠가 표시되고 있는 경우 UX가 어색해짐
+  - 이를 방지하기 위해 `startTransition`을 사용해 네비게이션 state 업데이트를 트랜지션으로 표시
+    (hooks - useTransition 참고)
+
+  ```js
+  import { Suspense, startTransition, useState } from "react";
+  import IndexPage from "./IndexPage.js";
+  import ArtistPage from "./ArtistPage.js";
+  import Layout from "./Layout.js";
+
+  export default function App() {
+    return (
+      <Suspense fallback={<BigSpinner />}>
+        <Router />
+      </Suspense>
+    );
+  }
+
+  function Router() {
+    const [page, setPage] = useState("/");
+
+    function navigate(url) {
+      startTransition(() => {
+        setPage(url);
+      });
+    }
+
+    let content;
+    if (page === "/") {
+      content = <IndexPage navigate={navigate} />;
+    } else if (page === "/the-beatles") {
+      content = (
+        <ArtistPage
+          artist={{
+            id: "the-beatles",
+            name: "The Beatles",
+          }}
+        />
+      );
+    }
+    return <Layout>{content}</Layout>;
+  }
+
+  function BigSpinner() {
+    return <h2>🌀 Loading...</h2>;
+  }
+  ```
