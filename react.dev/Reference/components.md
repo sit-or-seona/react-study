@@ -137,6 +137,46 @@
   </App>
   ```
 
+## StrictMode
+
+- 개발 중에 흔히 발생하는 버그를 조기에 발견 가능
+- 컴포넌트 트리 내부에서 추가적인 점검 진행 (개발 환경)
+
+  - 불완전한 렌더링으로 인한 버그를 찾기 위해 한 번 더 렌더링
+  - Effect 클린업이 누락되어 발생한 버그를 찾기 위해 Effect를 한 번 더 실행
+  - 지원 중단된 API 사용 여부 확인
+
+  ```js
+  import { StrictMode } from "react";
+  import { createRoot } from "react-dom/client";
+
+  const root = createRoot(document.getElementById("root"));
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  );
+  ```
+
+### Props
+
+- props를 허용하지 않음
+
+### 주의사항
+
+- `<StrictMode>`로 감싼 트리 내부에선 해제 불가
+
+### 사용법
+
+- 전체 앱에 Strict Mode 사용
+  - 개발 전용 검사를 추가로 수행하여 개발 프로세스 초기에 일반적인 버그 발견 가능
+- 이중 렌더링으로 발견된 버그 해결
+  - React는 모든 컴포넌트가 순수 함수라고 가정하기 때문에 항상 동일한 JSX를 반환해야 함
+  - 이 규칙을 위반하는 컴포넌트는 동작을 예측할 수 없고 버그를 유발하기 때문에 Strict Mode는 개발 환경에서 순수 함수만 두 번 호출하여 불순한 함수를 찾을 수 있도록 검사
+  - → 실수를 바로 확인 가능
+- 개발 환경에서 Effect를 재실행하여 발견된 버그 수정
+  - Effect 셋업 + 클린업 사이클을 한 번 더 실행하여 필요한 클린업 함수의 누락을 방지 가능
+
 ## Suspense
 
 - 자식이 로딩을 완료할 때까지 폴백을 화면에 표시
